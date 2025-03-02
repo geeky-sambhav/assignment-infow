@@ -76,9 +76,17 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
       role: user.role,
       token: generateToken(user.id, user.role),
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Signup error:', error);
-    res.status(500).json({ message: 'Server error' });
+    if (error instanceof Error) {
+      if (error.name === 'SequelizeUniqueConstraintError') {
+        res.status(400).json({ message: 'Email already in use' });
+      } else {
+        res.status(500).json({ message: 'Server error' });
+      }
+    } else {
+      res.status(500).json({ message: 'Server error' });
+    }
   }
 };
 

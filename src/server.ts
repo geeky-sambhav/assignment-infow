@@ -1,9 +1,11 @@
 // src/server.ts
 import express, { Request, Response } from 'express';
-import { Pool } from 'pg';
 import dotenv from 'dotenv';
-import sequelize from './models';
+import { sequelize, models } from './models';
 import authRoutes from './routes/authRoutes';
+import categoryRoutes from './routes/category';
+import productRoutes from './routes/product';
+import cors from 'cors';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -11,10 +13,8 @@ dotenv.config();
 const app = express();
 const port: number = Number(process.env.PORT) || 3000;
 
-// Create a PostgreSQL connection pool using the connection string from the .env file
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
+// Enable CORS
+app.use(cors());
 
 // Middleware to parse JSON bodies
 app.use(express.json());
@@ -27,13 +27,27 @@ app.get('/', (req: Request, res: Response) => {
 // Use auth routes
 app.use('/auth', authRoutes);
 
-sequelize
-  .sync()
+// Use category routes
+app.use('/categories', categoryRoutes);
+
+// Use product routes
+app.use('/products', productRoutes);
+
+// Initialize database and start server
+console.log('Initializing database...');
+sequelize.authenticate()
   .then(() => {
+    console.log('Database connection established successfully.');
+    return sequelize.sync({ force: true }); // This will drop and recreate tables
+  })
+  .then(() => {
+    console.log('All tables created successfully.');
     app.listen(port, () => {
       console.log(`Server running on port ${port}`);
     });
   })
   .catch((err: Error) => {
     console.error('Unable to connect to the database:', err);
+    console.error('Error details:', err);
+    process.exit(1); // Exit if database connection fails
   });

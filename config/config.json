@@ -1,0 +1,26 @@
+{
+  "development": {
+    "username": "ecommerce_owner",
+    "password": "npg_tih4YzXFp8KP",
+    "database": "ecommerce_development",
+    "host": "ep-super-block-a81sxpww-pooler.eastus2.azure.neon.tech",
+    "dialect": "postgres",
+    "sslmode": "require"
+  },
+  "test": {
+    "username": "ecommerce_owner",
+    "password": "npg_tih4YzXFp8KP",
+    "database": "ecommerce_test",
+    "host": "ep-super-block-a81sxpww-pooler.eastus2.azure.neon.tech",
+    "dialect": "postgres",
+    "sslmode": "require"
+  },
+  "production": {
+    "username": "ecommerce_owner",
+    "password": "npg_tih4YzXFp8KP",
+    "database": "ecommerce_production",
+    "host": "ep-super-block-a81sxpww-pooler.eastus2.azure.neon.tech",
+    "dialect": "postgres",
+    "sslmode": "require"
+  }
+}
