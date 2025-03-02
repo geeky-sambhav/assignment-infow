@@ -3,13 +3,14 @@ import bcryptjs from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/user';
 import { UserCreationAttributes } from '../types/user';
+import { CLIENT_RENEG_LIMIT } from 'tls';
 
 // JWT secret should be in environment variables
 const JWT_SECRET :string = process.env.JWT_SECRET || 'secret';
 const JWT_EXPIRES_IN = '24h';
 
 // Admin security key should be in environment variables
-const ADMIN_SECURITY_KEY :string = process.env.ADMIN_SECURITY_KEY || 'infoware';
+const ADMIN_SECURITY_KEY :string = process.env.ADMIN_SECURITY_KEY || 'sambhav'
 
 /**
  * Generate JWT token
@@ -23,8 +24,10 @@ const generateToken = (id: number, role: string): string => {
 
 export const signup = async (req: Request, res: Response): Promise<void> => {
   try {
+    console.log("signup called and printing req.body----------------------")
+    console.log(req.body);
     const { name, email, password, role }: UserCreationAttributes = req.body;
-
+console.log("after printing req body-----------------------------------------")
     // Validate basic inputs
     if (!name || !email || !password) {
       res.status(400).json({ message: 'Please provide all required fields' });
@@ -33,10 +36,11 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
 
     // Check if user wants to register as admin
     const isAdminSignup = role === 'admin';
-
+console.log("checked role-------------------------------------------")
     // If admin signup, verify security key
     if (isAdminSignup) {
       if (!req.body.securityKey) {
+        console.log("checking security key----------------------")
         res.status(400).json({ message: 'Security key is required for admin signup' });
         return;
       }
@@ -48,12 +52,15 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
     }
 
     // Check if user already exists
+    console.log("checking existing user--------------------------------")
     const existingUser = await User.findOne({ where: { email } });
+    console.log("checked existing user--------------------------------")
     if (existingUser) {
       res.status(400).json({ message: 'User already exists' });
       return;
     }
 
+    console.log("checking password------------------------------------")
     // Hash password
     const salt = await bcryptjs.genSalt(10);
     const hashedPassword = await bcryptjs.hash(password, salt);
@@ -103,9 +110,16 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     // Find user
     const user = await User.findOne({ where: { email } });
+    
     if (!user) {
       res.status(401).json({ message: 'Invalid credentials' });
       return;
+    }
+    if(user.role==="admin"){
+      res.json({
+        message:"wrong api endpoint"
+      })
+      return
     }
 
     // Check password
@@ -168,88 +182,3 @@ export const adminLogin = async (req: Request, res: Response): Promise<void> => 
   }
 };
 
-
-export const register = async (req: Request, res: Response) => {
-  try {
-    const { name, email, password, role }: UserCreationAttributes = req.body;
-
-    // Check if user already exists
-    const existingUser = await User.findOne({ where: { email } });
-    if (existingUser) {
-      return res.status(400).json({ error: 'User already exists' });
-    }
-
-    // Hash password
-    const salt = await bcryptjs.genSalt(10);
-    const hashedPassword = await bcryptjs.hash(password, salt);
-
-    // Create new user
-    const user = await User.create({
-      name,
-      email,
-      password: hashedPassword,
-      role: role || 'user'
-    });
-
-    // Generate JWT token
-    const token = jwt.sign(
-      { userId: user.id, role: user.role },
-      JWT_SECRET,
-      { expiresIn: '1h' }
-    );
-
-    res.status(201).json({
-      message: 'User registered successfully',
-      token,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-      }
-    });
-  } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-
-
-export const loginNew = async (req: Request, res: Response) => {
-  try {
-    const { email, password } = req.body;
-
-    // Find user
-    const user = await User.findOne({ where: { email } });
-    if (!user) {
-      return res.status(400).json({ error: 'Invalid email or password' });
-    }
-
-    // Verify password
-    const validPassword = await bcryptjs.compare(password, user.password);
-    if (!validPassword) {
-      return res.status(400).json({ error: 'Invalid email or password' });
-    }
-
-    // Generate JWT token
-    const token = jwt.sign(
-      { userId: user.id, role: user.role },
-      JWT_SECRET,
-      { expiresIn: '1h' }
-    );
-
-    res.json({
-      message: 'Login successful',
-      token,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-      }
-    });
-  } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};

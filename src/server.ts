@@ -1,5 +1,5 @@
 // src/server.ts
-import express, { Request, Response } from 'express';
+import express, { Request, Response,Application } from 'express';
 import dotenv from 'dotenv';
 import { sequelize, models } from './models';
 import authRoutes from './routes/authRoutes';
@@ -7,11 +7,37 @@ import categoryRoutes from './routes/category';
 import productRoutes from './routes/product';
 import cors from 'cors';
 
+import swaggerJsdoc from "swagger-jsdoc";
+import swaggerUi from "swagger-ui-express";
+
 // Load environment variables from .env file
 dotenv.config();
 
-const app = express();
+
+const app: Application = express();
 const port: number = Number(process.env.PORT) || 3000;
+
+
+const swaggerOptions: swaggerJsdoc.Options = {
+  definition: {
+      openapi: "3.0.0",
+      info: {
+          title: "My API Documentation",
+          version: "1.0.0",
+          description: "Automatically generated API documentation for the TypeScript backend",
+      },
+      servers: [
+          { url: "http://localhost:3000", description: "Local server" },
+      ],
+  },
+  apis: ["./routes/*.ts"], // Point to where your route files are located
+};
+const swaggerSpec = swaggerJsdoc(swaggerOptions);
+
+// Serve Swagger UI
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+
 
 // Enable CORS
 app.use(cors());
@@ -34,20 +60,20 @@ app.use('/categories', categoryRoutes);
 app.use('/products', productRoutes);
 
 // Initialize database and start server
-console.log('Initializing database...');
-sequelize.authenticate()
-  .then(() => {
-    console.log('Database connection established successfully.');
-    return sequelize.sync({ force: true }); // This will drop and recreate tables
-  })
-  .then(() => {
-    console.log('All tables created successfully.');
-    app.listen(port, () => {
-      console.log(`Server running on port ${port}`);
-    });
-  })
-  .catch((err: Error) => {
-    console.error('Unable to connect to the database:', err);
-    console.error('Error details:', err);
-    process.exit(1); // Exit if database connection fails
-  });
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`)
+  console.log(`🚀 Server running on http://localhost:${port}`);
+  console.log(`📜 Swagger docs available at http://localhost:${port}/api-docs`);
+})
+
+  const startServer = async () => {
+    try {
+        await sequelize.sync({ alter:true }); // Use force: true only for development to drop existing tables
+        console.log('Database synchronized');
+        // Start your server here
+    } catch (error) {
+        console.error('Error synchronizing database:', error);
+    }
+};
+
+startServer();
