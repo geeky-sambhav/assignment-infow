@@ -55,7 +55,7 @@ class ProductService {
       slug
     });
 
-    return this.findById(product.id); // Return with category included
+    return this.findById(product.id); 
   }
 
   async update(id: number, productData: UpdateProductDto) {
@@ -92,7 +92,7 @@ class ProductService {
     }
 
     await product.update(productData);
-    return this.findById(id); // Return updated product with category included
+    return this.findById(id); 
   }
 
   async delete(id: number) {

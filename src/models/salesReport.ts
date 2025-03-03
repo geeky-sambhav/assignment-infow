@@ -2,20 +2,20 @@ import { Model, DataTypes, Optional, Sequelize } from 'sequelize';
 import Category from './category';
 import Product from './product';
 
-interface SalesReportAttributes {
-  id: number;
+export interface SalesReportAttributes {
+  id?: number;
   categoryId?: number;
   productId?: number;
   quantity: number;
   revenue: number;
   date: Date;
-  createdAt?: Date;
+  createdAt?: Date; 
   updatedAt?: Date;
 }
 
-interface SalesReportCreationAttributes extends Optional<SalesReportAttributes, 'id' | 'createdAt' | 'updatedAt'> {}
+export interface SalesReportCreationAttributes extends Optional<SalesReportAttributes, 'id' | 'createdAt' | 'updatedAt'> {}
 
-export class SalesReport extends Model<SalesReportAttributes, SalesReportCreationAttributes> implements SalesReportAttributes {
+class SalesReport extends Model<SalesReportAttributes, SalesReportCreationAttributes> implements SalesReportAttributes {
   public id!: number;
   public categoryId!: number;
   public productId!: number;
@@ -60,12 +60,18 @@ export const initSalesReportModel = (sequelize: Sequelize) => {
         allowNull: false,
       },
       revenue: {
-        type: DataTypes.DECIMAL(10, 2),
+        type: DataTypes.INTEGER,
         allowNull: false,
+        get() {
+          // Ensure we always get a number, not a string
+          const value = this.getDataValue('revenue');
+          return typeof value === 'string' ? parseInt(value, 10) : value;
+        }
       },
       date: {
         type: DataTypes.DATE,
         allowNull: false,
+        defaultValue: DataTypes.NOW,
       },
       createdAt: {
         type: DataTypes.DATE,
@@ -87,3 +93,5 @@ export const initSalesReportModel = (sequelize: Sequelize) => {
 
   return SalesReport;
 };
+
+export default SalesReport;

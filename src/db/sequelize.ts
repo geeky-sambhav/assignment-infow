@@ -18,10 +18,10 @@ const sequelize = new Sequelize(DATABASE_CONFIG.url, {
       rejectUnauthorized: false
     }
   },
-  pool: {
-    max: 5,
-    min: 0,
-    acquire: 30000,
+    pool: {
+      max: 5,
+      min: 0,
+      acquire: 30000,
     idle: 10000,
   }
 });
@@ -42,36 +42,22 @@ Order.associate({ User, OrderItem });
 OrderItem.associate({ Order, Product });
 SalesReport.associate({ Category, Product });
 
-// Test the connection and sync models
-console.log('Testing database connection...');
-sequelize.authenticate()
+// Test database connection
+sequelize
+  .authenticate()
   .then(async () => {
     console.log('✓ Database connection established successfully.');
     
-    // Drop all tables and sequences first
     try {
-      // Drop existing tables
-      await sequelize.getQueryInterface().dropAllTables();
-      
-      // Drop sequences
-      const sequences = ['users_id_seq', 'categories_id_seq', 'products_id_seq', 'orders_id_seq', 'order_items_id_seq', 'sales_reports_id_seq'];
-      for (const seq of sequences) {
-        try {
-          await sequelize.query(`DROP SEQUENCE IF EXISTS "${seq}" CASCADE;`);
-        } catch (error: any) {
-          console.log(`Note: Sequence ${seq} might not exist, continuing...`);
-        }
-      }
-      
-      console.log('✓ Cleaned up existing tables and sequences.');
+      // Now sync all models
+      console.log('Synchronizing models...');
+      await sequelize.sync();
+      console.log('✓ All models were synchronized successfully.');
     } catch (error: any) {
-      console.log('Note: Some cleanup operations failed, continuing with sync:', error.message);
+      console.error('❌ Synchronization error:', error.message);
+      console.error('Error details:', error);
+      process.exit(1);
     }
-
-    // Now sync all models
-    console.log('Synchronizing models...');
-    await sequelize.sync({ force: true });
-    console.log('✓ All models were synchronized successfully.');
   })
   .catch((error: any) => {
     console.error('❌ Database connection error:', error.message);

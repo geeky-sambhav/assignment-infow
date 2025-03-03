@@ -4,8 +4,7 @@ import salesReportService from '../services/salesReport';
 export class SalesReportController {
   async getCategorySales(req: Request, res: Response): Promise<void> {
     try {
-      const { startDate, endDate } = this.getDateRange(req);
-      const categorySales = await salesReportService.getCategorySalesReport(startDate, endDate);
+      const categorySales = await salesReportService.getCategorySalesReport();
       
       res.status(200).json({
         success: true,
@@ -23,10 +22,8 @@ export class SalesReportController {
 
   async getTopSellingProducts(req: Request, res: Response): Promise<void> {
     try {
-      const { startDate, endDate } = this.getDateRange(req);
       const limit = parseInt(req.query.limit as string) || 10;
-      
-      const topProducts = await salesReportService.getTopSellingProducts(limit, startDate, endDate);
+      const topProducts = await salesReportService.getTopSellingProducts(limit);
       
       res.status(200).json({
         success: true,
@@ -44,10 +41,8 @@ export class SalesReportController {
 
   async getWorstSellingProducts(req: Request, res: Response): Promise<void> {
     try {
-      const { startDate, endDate } = this.getDateRange(req);
       const limit = parseInt(req.query.limit as string) || 10;
-      
-      const worstProducts = await salesReportService.getWorstSellingProducts(limit, startDate, endDate);
+      const worstProducts = await salesReportService.getWorstSellingProducts();
       
       res.status(200).json({
         success: true,
@@ -61,16 +56,6 @@ export class SalesReportController {
         error: (error as Error).message,
       });
     }
-  }
-
-  private getDateRange(req: Request): { startDate?: Date; endDate?: Date } {
-    const startDateStr = req.query.startDate as string;
-    const endDateStr = req.query.endDate as string;
-    
-    const startDate = startDateStr ? new Date(startDateStr) : undefined;
-    const endDate = endDateStr ? new Date(endDateStr) : undefined;
-    
-    return { startDate, endDate };
   }
 }
 

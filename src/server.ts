@@ -5,72 +5,48 @@ import { sequelize, models } from './models';
 import authRoutes from './routes/authRoutes';
 import categoryRoutes from './routes/category';
 import productRoutes from './routes/product';
+import orderRoutes from './routes/order';
+import salesReportRoutes from './routes/salesReport';
 import cors from 'cors';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './swagger';
+import swaggerJsdoc from 'swagger-jsdoc';
 
-import swaggerJsdoc from "swagger-jsdoc";
-import swaggerUi from "swagger-ui-express";
 
-// Load environment variables from .env file
 dotenv.config();
-
 
 const app: Application = express();
 const port: number = Number(process.env.PORT) || 3000;
 
 
-const swaggerOptions: swaggerJsdoc.Options = {
-  definition: {
-      openapi: "3.0.0",
-      info: {
-          title: "My API Documentation",
-          version: "1.0.0",
-          description: "Automatically generated API documentation for the TypeScript backend",
-      },
-      servers: [
-          { url: "http://localhost:3000", description: "Local server" },
-      ],
-  },
-  apis: ["./routes/*.ts"], // Point to where your route files are located
-};
-const swaggerSpec = swaggerJsdoc(swaggerOptions);
-
-// Serve Swagger UI
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-
-
-
-// Enable CORS
 app.use(cors());
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// Middleware to parse JSON bodies
 app.use(express.json());
 
-// Root route to test the server
-app.get('/', (req: Request, res: Response) => {
-  res.send('Hello World!');
-});
-
-// Use auth routes
+// Routes
 app.use('/auth', authRoutes);
-
-// Use category routes
 app.use('/categories', categoryRoutes);
-
-// Use product routes
 app.use('/products', productRoutes);
+app.use('/orders', orderRoutes);
+app.use('/sales-report', salesReportRoutes);
 
-// Initialize database and start server
+
+
+
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 app.listen(port, () => {
   console.log(`Server running on port ${port}`)
-  console.log(`🚀 Server running on http://localhost:${port}`);
-  console.log(`📜 Swagger docs available at http://localhost:${port}/api-docs`);
+  console.log(`Server running on http://localhost:${port}`);
+  console.log(` Swagger docs available at http://localhost:${port}/docs`);
 })
 
-  const startServer = async () => {
+const startServer = async () => {
     try {
-        await sequelize.sync({ alter:true }); // Use force: true only for development to drop existing tables
+        await sequelize.sync(); 
         console.log('Database synchronized');
-        // Start your server here
+       
     } catch (error) {
         console.error('Error synchronizing database:', error);
     }
